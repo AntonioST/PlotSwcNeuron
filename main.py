@@ -1,5 +1,5 @@
 """
-Plot SWC file
+import .swc and export other extension file (e.g., .svg, .pdf, .png) using cli
 =============
 
 Requirement
@@ -108,7 +108,7 @@ class SwcNode:
     def is_dendrite(self) -> bool:
         return self.identifier == 3 or self.identifier == 4
 
-    def __str__(self):
+    def __str__(self):  # todo comment
         return ' '.join(map(str, [
             self.node_number,
             self.identifier,
@@ -119,7 +119,7 @@ class SwcNode:
             self.parent
         ]))
 
-    def __repr__(self):
+    def __repr__(self):  # todo comment
         return f'{self.node_number}, ' \
                f'id={self.identifier} ' \
                f'p=({self.x}, {self.y}, {self.z}), ' \
@@ -136,7 +136,7 @@ class Swc:
         self.comment = comment if comment is not None else []
 
     @classmethod
-    def load(cls, file: Path) -> 'Swc':
+    def load(cls, file: Path) -> 'Swc':  # TODO comment
         comment = []
         node = []
 
@@ -243,7 +243,7 @@ def smooth_line_radius(ax: Axes,
     for i in range(1, num):
         ax.plot(px[i - 1:i + 1], py[i - 1:i + 1], lw=lw[i], **kwargs)
 
-
+# change color for each segment
 DEFAULT_COLOR = {
     'body': 'k',
     'soma': 'b',
@@ -308,6 +308,7 @@ def main():
                     help='show preview')
     ap.add_argument('FILE',
                     help='swc file')
+
     opt = ap.parse_args()
     swc = opt.FILE
     swc = Swc.load(Path(swc))
@@ -324,7 +325,7 @@ def main():
     else:
         output = opt.output
         if output is None:
-            output = opt.FILE.replace('.swc', '.png')
+            output = opt.FILE.replace('.swc', '.png')  # output .png if there is no given output
         plt.savefig(output, dpi=300)
 
 
