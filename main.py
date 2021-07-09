@@ -52,7 +52,7 @@ class SwcNode:
     def is_dendrite(self) -> bool:
         return self.identifier == 3 or self.identifier == 4
 
-    def __str__(self):  # todo comment
+    def __str__(self):
         return ' '.join(map(str, [
             self.node_number,
             self.identifier,
@@ -63,7 +63,7 @@ class SwcNode:
             self.parent
         ]))
 
-    def __repr__(self):  # todo comment
+    def __repr__(self):
         return f'{self.node_number}, ' \
                f'id={self.identifier} ' \
                f'p=({self.x}, {self.y}, {self.z}), ' \
@@ -72,13 +72,13 @@ class SwcNode:
 
 
 class Swc:
-    node: List[SwcNode]
+    node: List[SwcNode]  # TODO
 
     def __init__(self, node: List[SwcNode]):
         self.node = node
 
     @classmethod
-    def load(cls, file: Path) -> 'Swc':  # TODO comment
+    def load(cls, file: Path) -> 'Swc':
         node = []
 
         # UnicodeDecodeError: 'utf-8' codec can't decode byte 0xa4 in position 205: invalid start byte
@@ -141,7 +141,7 @@ class Swc:
 
         :return: tuple of 2 nodes (child, parent).
         """
-        for node in self.node:
+        for node in self.node:   # TODO
             if node.parent > 0:
                 yield node, self[node.parent]
 
