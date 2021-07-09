@@ -83,7 +83,7 @@ class Vec:
     @property
     def unit(self) -> 'Vec':
         n = abs(self)
-        if abs(n) < 1e-5:
+        if n < 1e-5:
             return self  # empty vector
 
         return Vec(self.x / n, self.y / n, self.z / n)
@@ -368,8 +368,8 @@ class OrthographicProjection(Projection):
     def __call__(self, p: Vec) -> R2:
         u = self.u
         q = Vec(p.x, p.y, p.z * self.z)
-        a = u @ q
-        b = a @ u
+        a = q / u
+        b = q - a
         cx = b / self.t
         cy = b - cx
         return abs(cx), abs(cy)
@@ -407,7 +407,7 @@ class OrthographicProjection(Projection):
                         i += 3
                         s += 1
 
-                except IndexError as e:
+                except (IndexError, ValueError) as e:
                     raise ValueError(f'illegal pattern {pattern} : {expr}') from e
 
         if s == 1 and p[0] * p[1] == 1:
@@ -486,14 +486,17 @@ class ColorZSegStyle(SegStyle):
         else:
             raise ValueError(f'illegal pattern {pattern} : {expr}')
 
-        expr = expr[1:]
-        if '~' not in expr:
-            lo = float(expr)
-            hi = 1.0
-        else:
-            i = expr.index('~')
-            lo = float(expr[:i])
-            hi = float(expr[i + 1:])
+        try:
+            expr = expr[1:]
+            if '~' not in expr:
+                lo = float(expr)
+                hi = 1.0
+            else:
+                i = expr.index('~')
+                lo = float(expr[:i])
+                hi = float(expr[i + 1:])
+        except (IndexError, ValueError) as e:
+            raise ValueError(f'illegal pattern {pattern} : {expr}')
 
         return ColorZSegStyle(code, (lo, hi))
 
@@ -515,36 +518,29 @@ class ColorZSegStyle(SegStyle):
 
         return kwargs
 
+    # noinspection PyPep8Naming
     @staticmethod
     def color_change_hsV(color: str, f: float):
-        try:
-            c = colors.BASE_COLORS[color]
-        except KeyError:
-            try:
-                c = colors.cnames[color]
-            except KeyError:
-                c = color
-
-        h, s, v = colors.rgb_to_hsv(c)
+        h, s, v = colors.rgb_to_hsv(ColorZSegStyle.get_color_rgb_code(color))
         v = max(1, min(0, v * f))
         return colors.hsv_to_rgb((h, s, v))
 
+    # noinspection PyPep8Naming
     @staticmethod
     def color_change_hSv(color: str, f: float):
-        try:
-            c = colors.BASE_COLORS[color]
-        except KeyError:
-            try:
-                c = colors.cnames[color]
-            except KeyError:
-                c = color
-
-        h, s, v = colors.rgb_to_hsv(c)
+        h, s, v = colors.rgb_to_hsv(ColorZSegStyle.get_color_rgb_code(color))
         s = max(1, min(0, s * f))
         return colors.hsv_to_rgb((h, s, v))
 
+    # noinspection PyPep8Naming
     @staticmethod
     def color_change_Hsv(color: str, f: float):
+        h, s, v = colors.rgb_to_hsv(ColorZSegStyle.get_color_rgb_code(color))
+        h = (h + f + 1) % 1
+        return colors.hsv_to_rgb((h, s, v))
+
+    @staticmethod
+    def get_color_rgb_code(color):
         try:
             c = colors.BASE_COLORS[color]
         except KeyError:
@@ -552,10 +548,7 @@ class ColorZSegStyle(SegStyle):
                 c = colors.cnames[color]
             except KeyError:
                 c = color
-
-        h, s, v = colors.rgb_to_hsv(c)
-        h = (h + f + 1) % 1
-        return colors.hsv_to_rgb((h, s, v))
+        return c
 
 
 def smooth_line_radius(ax: Axes,
