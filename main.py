@@ -1,6 +1,8 @@
 """
-import .swc and export other extension file (e.g., .svg, .pdf, .png) using cli
+Plot SWC file
 =============
+
+import .swc and export other extension file (e.g., .svg, .pdf, .png) using cli
 
 Requirement
 -----------
@@ -129,15 +131,12 @@ class SwcNode:
 
 class Swc:
     node: List[SwcNode]
-    comment: List[str]
 
-    def __init__(self, node: List[SwcNode], comment: List[str] = None):
+    def __init__(self, node: List[SwcNode]):
         self.node = node
-        self.comment = comment if comment is not None else []
 
     @classmethod
     def load(cls, file: Path) -> 'Swc':  # TODO comment
-        comment = []
         node = []
 
         # UnicodeDecodeError: 'utf-8' codec can't decode byte 0xa4 in position 205: invalid start byte
@@ -154,7 +153,6 @@ class Swc:
                 if len(line) == 0:
                     continue
                 if line.startswith('#'):
-                    comment.append(line)
                     continue
 
                 part = line.split()
@@ -168,7 +166,7 @@ class Swc:
 
                 node.append(SwcNode(n, s, x, y, z, r, p))
 
-        return Swc(node, comment)
+        return Swc(node)
 
     def __getitem__(self, item: int) -> SwcNode:
         """Get SwcNode whose node_number equals to item.
@@ -207,7 +205,6 @@ class Swc:
 
     def __str__(self):
         line = []
-        line.extend(self.comment)
         for node in self.node:
             line.append(str(node))
         return '\n'.join(line)
@@ -225,7 +222,7 @@ def default_project(p: Tuple[float, float, float]) -> Tuple[float, float]:
 def smooth_line_radius(ax: Axes,
                        p1: Tuple[float, float], w1: float,
                        p2: Tuple[float, float], w2: float,
-                       num=3,
+                       num=2,
                        **kwargs):
     """plot smoothed line.
 
@@ -237,11 +234,12 @@ def smooth_line_radius(ax: Axes,
     :param num: number of segments.
     :param kwargs: other line property
     """
-    px = np.linspace(p1[0], p2[0], num)
-    py = np.linspace(p1[1], p2[1], num)
+    px = np.linspace(p1[0], p2[0], num + 1)
+    py = np.linspace(p1[1], p2[1], num + 1)
     lw = np.linspace(w1, w2, num)
-    for i in range(1, num):
-        ax.plot(px[i - 1:i + 1], py[i - 1:i + 1], lw=lw[i], **kwargs)
+    for i in range(num):
+        ax.plot(px[i:i + 2], py[i:i + 2], lw=lw[i], **kwargs)
+
 
 # change color for each segment
 DEFAULT_COLOR = {
@@ -293,7 +291,7 @@ def plot_swc(ax: Axes, swc: Swc,
             ax.plot(px, py, color=c, solid_capstyle='round')
 
 
-def main():
+def main(args: List[str] = None):
     ap = argparse.ArgumentParser()
     ap.add_argument('-o', '--output',
                     default=None,
@@ -309,7 +307,7 @@ def main():
     ap.add_argument('FILE',
                     help='swc file')
 
-    opt = ap.parse_args()
+    opt = ap.parse_args(args)
     swc = opt.FILE
     swc = Swc.load(Path(swc))
 
@@ -327,6 +325,7 @@ def main():
         if output is None:
             output = opt.FILE.replace('.swc', '.png')  # output .png if there is no given output
         plt.savefig(output, dpi=300)
+        plt.clf()
 
 
 if __name__ == '__main__':
