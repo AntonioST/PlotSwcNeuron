@@ -62,6 +62,7 @@ from typing import List, Iterator, Tuple, Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import colors
 from matplotlib.axes import Axes
 from matplotlib.patches import Circle
 
@@ -250,6 +251,34 @@ DEFAULT_COLOR = {
 }
 
 
+def color_change_hsV(color: str, f: float):
+    try:
+        c = colors.BASE_COLORS[color]
+    except KeyError:
+        try:
+            c = colors.cnames[color]
+        except KeyError:
+            c = color
+
+    h, s, v = colors.rgb_to_hsv(c)
+    v = max(1, min(0, v * f))
+    return colors.hsv_to_rgb((h, s, v))
+
+
+def color_change_Hsv(color: str, f: float):
+    try:
+        c = colors.BASE_COLORS[color]
+    except KeyError:
+        try:
+            c = colors.cnames[color]
+        except KeyError:
+            c = color
+
+    h, s, v = colors.rgb_to_hsv(c)
+    h = (h + f + 1) % 1
+    return colors.hsv_to_rgb((h, s, v))
+
+
 def plot_swc(ax: Axes, swc: Swc,
              radius=True,
              color: Dict[str, str] = None,
@@ -265,6 +294,10 @@ def plot_swc(ax: Axes, swc: Swc,
     if color is None:
         color = DEFAULT_COLOR
 
+    Z = np.array([n.z for n in swc.node])
+    Z = np.max(Z), np.min(Z)
+    Z = Z[0], Z[1] - Z[0]
+
     for n1, n2 in swc.foreach_line():
         p1 = projection((n1.x, n1.y, n1.z))
         p2 = projection((n2.x, n2.y, n2.z))
@@ -277,6 +310,11 @@ def plot_swc(ax: Axes, swc: Swc,
             c = color['dendrite']
         else:
             c = color['body']
+
+        z = (n1.z + n2.z) / 2  # average z
+        z = (z - Z[0]) / Z[1]  # normalize [0, 1]
+        a = z * 0.2 - 0.1  # normalize [0.5, 1]
+        c = color_change_Hsv(c, a)
 
         if radius:
             if n2.is_soma:
