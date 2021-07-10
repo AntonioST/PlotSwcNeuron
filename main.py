@@ -18,10 +18,22 @@ class Vec:
     Y: ClassVar
     Z: ClassVar
 
+    __slots__ = 'x', 'y', 'z'
+
     def __init__(self, x: float, y: float, z: float):
         self.x = x
         self.y = y
         self.z = z
+
+    def __getitem__(self, item):
+        if item in (0, 'x'):
+            return self.x
+        elif item in (1, 'y'):
+            return self.y
+        elif item in (2, 'z'):
+            return self.z
+        else:
+            raise KeyError()
 
     @property
     def unit(self) -> 'Vec':
@@ -117,7 +129,7 @@ class SwcNode:
     node_number: int
     identifier: int
     """
-    Standardized swc files (www.neuromorpho.org) - 
+    Standardized swc files (www.neuromorpho.org) -
     0 - undefined
     1 - soma
     2 - axon
@@ -165,7 +177,7 @@ class SwcNode:
     def is_dendrite(self) -> bool:
         return self.identifier == 3 or self.identifier == 4
 
-    def __str__(self):  # todo comment
+    def __str__(self):
         return ' '.join(map(str, [
             self.node_number,
             self.identifier,
@@ -176,7 +188,7 @@ class SwcNode:
             self.parent
         ]))
 
-    def __repr__(self):  # todo comment
+    def __repr__(self):
         return f'{self.node_number}, ' \
                f'id={self.identifier} ' \
                f'p=({self.x}, {self.y}, {self.z}), ' \
@@ -191,7 +203,7 @@ class Swc:
         self.node = node
 
     @classmethod
-    def load(cls, file: Path) -> 'Swc':  # TODO comment
+    def load(cls, file: Path) -> 'Swc':
         node = []
 
         # UnicodeDecodeError: 'utf-8' codec can't decode byte 0xa4 in position 205: invalid start byte
@@ -333,15 +345,15 @@ class OrthographicProjection(Projection):
                     if part[i].startswith('*'):
                         z = float(part[i][1:])
                         i += 1
-                    elif part[i] in 'X':
+                    elif part[i] == 'X':
                         p[s] = Vec.X
                         i += 1
                         s += 1
-                    elif part[i] in 'Y':
+                    elif part[i] == 'Y':
                         p[s] = Vec.Y
                         i += 1
                         s += 1
-                    elif part[i] in 'Z':
+                    elif part[i] == 'Z':
                         p[s] = Vec.Z
                         i += 1
                         s += 1
@@ -381,7 +393,7 @@ class SegStyle(metaclass=abc.ABCMeta):
         try:
             seg_type = globals()[name + 'SegStyle']
         except KeyError as e:
-            raise RuntimeError(f'SegStyle : {name}SegStyle not found')
+            raise RuntimeError(f'SegStyle : {name}SegStyle not found') from e
 
         if not issubclass(seg_type, SegStyle):
             raise TypeError(f'not a SegStyle : {seg_type}')
@@ -439,7 +451,7 @@ class ColorZSegStyle(SegStyle):
                 lo = float(expr[:i])
                 hi = float(expr[i + 1:])
         except (IndexError, ValueError) as e:
-            raise ValueError(f'illegal pattern {pattern} : {expr}')
+            raise ValueError(f'illegal pattern {pattern} : {expr}') from e
 
         return ColorZSegStyle(code, (lo, hi))
 
