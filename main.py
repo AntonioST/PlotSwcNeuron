@@ -72,7 +72,7 @@ class SwcNode:
 
 
 class Swc:
-    node: List[SwcNode]  # TODO
+    node: List[SwcNode]
 
     def __init__(self, node: List[SwcNode]):
         self.node = node
@@ -112,11 +112,13 @@ class Swc:
 
     def __getitem__(self, item: int) -> SwcNode:
         """Get SwcNode whose node_number equals to item.
+        usage: self[node.parent]
 
         :param item: node_number value
         :return: found node
         :raise IndexError: node found found
         """
+        # fast path
         try:
             ret = self.node[item - 1]
         except IndexError:
@@ -125,6 +127,7 @@ class Swc:
         if ret is not None and ret.node_number == item:
             return ret
 
+        # slow path
         for node in self.node:
             if node.node_number == item:
                 return node
@@ -141,9 +144,9 @@ class Swc:
 
         :return: tuple of 2 nodes (child, parent).
         """
-        for node in self.node:   # TODO
+        for node in self.node:
             if node.parent > 0:
-                yield node, self[node.parent]
+                yield node, self[node.parent]  # getitem
 
     def __str__(self):
         line = []
@@ -181,6 +184,7 @@ def smooth_line_radius(ax: Axes,
     lw = np.linspace(w1, w2, num)
     for i in range(num):
         ax.plot(px[i:i + 2], py[i:i + 2], lw=lw[i], **kwargs)
+
 
 
 # change color for each segment
